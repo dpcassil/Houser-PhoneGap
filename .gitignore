@@ -1,0 +1,6 @@
+$ cat .gitignore
+# exclude everything except directory foo/bar
+/node_modules/*
+package.json
+Web.config
+.DS_Store

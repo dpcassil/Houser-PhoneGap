@@ -1,0 +1,47 @@
+.signin_wrapper {
+	
+}
+.signin_form {
+	padding: 20px;
+	margin-left: auto;
+	margin-right: auto;
+	width: 80%;
+	max-width: 600px;
+	box-sizing: border-box;
+	transition: all .3s ease-in;
+	-webkit-transition: opacity .3s;
+	opacity: 0;
+}
+div.footer {
+	margin: 50px 0 25px 0;
+	bottom: 0px;
+	text-align: center;
+}
+.signin_form .signin_input {
+	width: 100%;
+	height: 50px;
+	font-size: 14pt;
+	padding: 5px;
+	margin-top: 30px;
+	text-align: center;
+	color: white;
+	background: transparent;
+	border: none;
+	border-bottom: 1pt solid rgba(255, 255, 255, 0.44); 
+	box-sizing: border-box;
+	border-radius: 0;
+
+}
+.signin_form.show {
+	opacity: 1;
+}
+.signin_input.signin_button {
+	border: none;
+	padding-top: 25px;
+	padding-bottom: 25px;
+}
+::-webkit-input-placeholder {
+	color: white;
+	opacity: .5;
+} 
+

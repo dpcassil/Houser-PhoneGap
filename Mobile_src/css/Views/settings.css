@@ -1,0 +1,7 @@
+div.settings_wrapper {
+	position: absolute;
+	left: -600px;
+}
+div.settings_wrapper.show {
+	left: 0;
+}
