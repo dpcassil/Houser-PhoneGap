@@ -550,7 +550,7 @@ input {
 input.signin_primary {
 	background: rgba(255,255,255,1);
 }
-input.houser-submit-button {
+input.signin_primary {
 	width: 100%;
 	line-height: 34px;
 	color: rgba(166, 16, 3, 0.76);

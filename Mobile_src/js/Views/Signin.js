@@ -4,16 +4,16 @@ define([
 	'backbone',
 	'text!Templates/signin.tmpl',
 	'js/ajax'
-], function ($, _, Backbone, welcome_template, ajax) {
+], function ($, _, Backbone, _template, ajax) {
 	'use strict';
 
 	var View = Backbone.View.extend({
 		el: $('.wrapper'),
 		events: {
-			'click .houser-submit-button': 'submitLogin',
+			'click .houser-submit-signin': 'submitLogin',
 			'click .houser-register-button': 'signupClick'
 		},
-		template: _.template(welcome_template),
+		template: _.template(_template),
 		selector: $('.wrapper'),
 		initialize: function (options) {
 			var self = this,
@@ -31,7 +31,7 @@ define([
 			
 			window.setTimeout(function () {
 				$('.signin_flex_form').addClass('show');
-				HOUSER.router.navigate('main', {trigger: true});
+				//HOUSER.router.navigate('main', {trigger: true});
 			}, 100);
 			
 		},
@@ -53,7 +53,7 @@ define([
 							localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
 						}
 						//self.testGetProps();
-						HOUSER.router.navigate('main', {trigger: true});
+						//HOUSER.router.navigate('main', {trigger: true});
 					} else {
 						alert('User not authorized.');
 					}
@@ -73,8 +73,7 @@ define([
 					password: $('.houser-signin-password').val(),
 					name: self.attributes.name
 				};
-			//self.remove();
-			HOUSER.router.navigate('signup?' + JSON.stringify(data), {trigger: true});
+			HOUSER.router.navigate('signup?' + JSON.stringify(data), {trigger: true});	
 		},
 		testGetProps: function () {
 			var self = this,

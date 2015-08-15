@@ -10,7 +10,7 @@ define([
 	var View = Backbone.View.extend({
 		el: $('.wrapper'),
 		events: {
-			'click .houser-submit-button': 'submitLogin',
+			'click .houser-submit-signup': 'submitLogin',
 			'click .houser-signin-button': 'signinClick'
 		},
 		template: _.template(welcome_template),
@@ -73,8 +73,8 @@ define([
 					password: $('.houser-signin-password').val(),
 					name: $('.houser-signin-name').val()
 				};
-			//self.remove();
 			HOUSER.router.navigate('signin?' + JSON.stringify(data), {trigger: true});
+
 		}
 	});
 

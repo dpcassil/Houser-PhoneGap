@@ -58,6 +58,7 @@ define(
 					console.log(model);
 					//$.mobile.changePage( '#' + route , { reverse: false, changeHash: false } );
 					new view(new model(data));
+					HOUSER.router.trigger('router-kill-view');
 				});
 			},
 			navigate: function (type, data) {

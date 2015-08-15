@@ -15207,7 +15207,7 @@ HOUSER.define('text',['module'], function (module) {
     return text;
 });
 
-HOUSER.define('text!Templates/signin.tmpl',[],function () { return '\n<div class="signin_flex_form">\n\t<li class="flex_larger">\n\t\t<input type="email" class="signin_flex_input houser-signin-email" placeholder="your@email.com">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="password" class="signin_flex_input houser-signin-password" placeholder="your_password">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_primary houser-submit-button" value="Login">\n\t</li>\n\t<span class="flex_smaller signin_info_text">If you need an account please register now for free.</span>\n\t<li class="flex_smaller">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_secondary houser-register-button" value="Sign Up">\n\t</li>\n</div>\n';});
+HOUSER.define('text!Templates/signin.tmpl',[],function () { return '\n<div class="signin_flex_form">\n\t<li class="flex_larger">\n\t\t<input type="email" class="signin_flex_input houser-signin-email" placeholder="your@email.com">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="password" class="signin_flex_input houser-signin-password" placeholder="your_password">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_primary houser-submit-signin" value="Login">\n\t</li>\n\t<span class="flex_smaller signin_info_text">If you need an account please register now for free.</span>\n\t<li class="flex_smaller">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_secondary houser-register-button" value="Sign Up">\n\t</li>\n</div>\n';});
 
 HOUSER.define('js/ajax',[], function () {
 	var ajax = function () {
@@ -15246,16 +15246,16 @@ HOUSER.define('Views/Signin',[
 	'backbone',
 	'text!Templates/signin.tmpl',
 	'js/ajax'
-], function ($, _, Backbone, welcome_template, ajax) {
+], function ($, _, Backbone, _template, ajax) {
 	'use strict';
 
 	var View = Backbone.View.extend({
 		el: $('.wrapper'),
 		events: {
-			'click .houser-submit-button': 'submitLogin',
+			'click .houser-submit-signin': 'submitLogin',
 			'click .houser-register-button': 'signupClick'
 		},
-		template: _.template(welcome_template),
+		template: _.template(_template),
 		selector: $('.wrapper'),
 		initialize: function (options) {
 			var self = this,
@@ -15273,7 +15273,7 @@ HOUSER.define('Views/Signin',[
 			
 			window.setTimeout(function () {
 				$('.signin_flex_form').addClass('show');
-				HOUSER.router.navigate('main', {trigger: true});
+				//HOUSER.router.navigate('main', {trigger: true});
 			}, 100);
 			
 		},
@@ -15295,7 +15295,7 @@ HOUSER.define('Views/Signin',[
 							localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
 						}
 						//self.testGetProps();
-						HOUSER.router.navigate('main', {trigger: true});
+						//HOUSER.router.navigate('main', {trigger: true});
 					} else {
 						alert('User not authorized.');
 					}
@@ -15315,8 +15315,7 @@ HOUSER.define('Views/Signin',[
 					password: $('.houser-signin-password').val(),
 					name: self.attributes.name
 				};
-			//self.remove();
-			HOUSER.router.navigate('signup?' + JSON.stringify(data), {trigger: true});
+			HOUSER.router.navigate('signup?' + JSON.stringify(data), {trigger: true});	
 		},
 		testGetProps: function () {
 			var self = this,
@@ -15344,7 +15343,7 @@ HOUSER.define('Views/Signin',[
 });
 
 
-HOUSER.define('text!Templates/signup.tmpl',[],function () { return '\n<div class="signin_flex_form">\n\t<li class="flex_larger">\n\t\t<input type="email" class="signin_flex_input houser-signin-email" placeholder="your@email.com">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="password" class="signin_flex_input houser-signin-password" placeholder="your_password">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="text" class="signin_flex_input houser-signin-name" placeholder="first & last name">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_primary houser-submit-button" value="Sign Up!">\n\t</li>\n\t<span class="flex_smaller signin_info_text">If you have an account you can go back to the login page.</span>\n\t<li>\n\t\t<input type="button" class="signin_flex_input signin_flex_button flex_smaller signin_secondary houser-signin-button" value="Return to login">\n\t</li>\n</div>\n';});
+HOUSER.define('text!Templates/signup.tmpl',[],function () { return '\n<div class="signin_flex_form">\n\t<li class="flex_larger">\n\t\t<input type="email" class="signin_flex_input houser-signin-email" placeholder="your@email.com">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="password" class="signin_flex_input houser-signin-password" placeholder="your_password">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="text" class="signin_flex_input houser-signin-name" placeholder="first & last name">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_primary houser-submit-signup" value="Sign Up!">\n\t</li>\n\t<span class="flex_smaller signin_info_text">If you have an account you can go back to the login page.</span>\n\t<li>\n\t\t<input type="button" class="signin_flex_input signin_flex_button flex_smaller signin_secondary houser-signin-button" value="Return to login">\n\t</li>\n</div>\n';});
 
 HOUSER.define('Views/Signup',[
 	'jquery',
@@ -15358,7 +15357,7 @@ HOUSER.define('Views/Signup',[
 	var View = Backbone.View.extend({
 		el: $('.wrapper'),
 		events: {
-			'click .houser-submit-button': 'submitLogin',
+			'click .houser-submit-signup': 'submitLogin',
 			'click .houser-signin-button': 'signinClick'
 		},
 		template: _.template(welcome_template),
@@ -15421,8 +15420,8 @@ HOUSER.define('Views/Signup',[
 					password: $('.houser-signin-password').val(),
 					name: $('.houser-signin-name').val()
 				};
-			//self.remove();
 			HOUSER.router.navigate('signin?' + JSON.stringify(data), {trigger: true});
+
 		}
 	});
 
@@ -15596,6 +15595,7 @@ HOUSER.define(
 					console.log(model);
 					//$.mobile.changePage( '#' + route , { reverse: false, changeHash: false } );
 					new view(new model(data));
+					HOUSER.router.trigger('router-kill-view');
 				});
 			},
 			navigate: function (type, data) {
