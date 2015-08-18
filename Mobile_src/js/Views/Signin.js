@@ -3,8 +3,9 @@ define([
 	'underscore',
 	'backbone',
 	'text!Templates/signin.tmpl',
+	'Models/Signin',
 	'js/ajax'
-], function ($, _, Backbone, _template, ajax) {
+], function ($, _, Backbone, _template, Model, ajax) {
 	'use strict';
 
 	var View = Backbone.View.extend({
@@ -17,7 +18,7 @@ define([
 		selector: $('.wrapper'),
 		initialize: function (options) {
 			var self = this,
-				data = options.toJSON();
+				data = new Model();
 
 			self.render(data);
 		},

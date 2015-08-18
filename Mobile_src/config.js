@@ -1,5 +1,6 @@
 require.config({
 	paths: {
+		Master: 'js/Master',
 		Models: 'js/Models/',
 		Views: 'js/Views/',
 		Collections: 'js/Collections/',

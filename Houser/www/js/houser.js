@@ -14723,97 +14723,36 @@ return jQuery;
   return Backbone;
 
 }));
-HOUSER.define('Models/Signin',[
+HOUSER.define('Models/Property',[
 	'jquery',
 	'underscore',
 	'backbone'
 ], function ($, _, Backbone) {
 	'use strict';
 
-	var Model = Backbone.Model.extend({
+	var PropertyModel = Backbone.Model.extend({
 		defaults: {
 			id: -1,
-			email: '',
-			password: '',
-			name: ''
+			address: "",
+			city: "",
+			state: ""
 		}
 	});
 
-	return Model;
+	return PropertyModel;
 });
-HOUSER.define('Models/Signup',[
+HOUSER.define('Collections/SubView',[
 	'jquery',
 	'underscore',
-	'backbone'
-], function ($, _, Backbone) {
+	'backbone',
+	'Models/Property'
+], function ($, _, Backbone, Property) {
 	'use strict';
 
-	var Model = Backbone.Model.extend({
-		defaults: {
-			id: -1,
-			email: '',
-			password: ''
-		}
+	var SubViewCollection = Backbone.Collection.extend({
 	});
 
-	return Model;
-});
-HOUSER.define('Models/Main',[
-	'jquery',
-	'underscore',
-	'backbone'
-], function ($, _, Backbone) {
-	'use strict';
-
-	var WelcomeModel = Backbone.Model.extend({
-		defaults: {
-			id: -1,
-			title: "Houser",
-			description: 'a description.... need to hire a copy writer.',
-			author: "Daniel Cassil",
-			version: "0.1.0"
-		}
-	});
-
-	return WelcomeModel;
-});
-HOUSER.define('Models/Agenda',[
-	'jquery',
-	'underscore',
-	'backbone'
-], function ($, _, Backbone) {
-	'use strict';
-
-	var WelcomeModel = Backbone.Model.extend({
-		defaults: {
-			id: -1,
-			title: "Houser",
-			description: 'a description.... need to hire a copy writer.',
-			author: "Daniel Cassil",
-			version: "0.1.0"
-		}
-	});
-
-	return WelcomeModel;
-});
-HOUSER.define('Models/Settings',[
-	'jquery',
-	'underscore',
-	'backbone'
-], function ($, _, Backbone) {
-	'use strict';
-
-	var WelcomeModel = Backbone.Model.extend({
-		defaults: {
-			id: -1,
-			title: "Houser",
-			description: 'a description.... need to hire a copy writer.',
-			author: "Daniel Cassil",
-			version: "0.1.0"
-		}
-	});
-
-	return WelcomeModel;
+	return SubViewCollection;
 });
 /**
  * @license RequireJS text 2.0.14 Copyright (c) 2010-2014, The Dojo Foundation All Rights Reserved.
@@ -15209,6 +15148,24 @@ HOUSER.define('text',['module'], function (module) {
 
 HOUSER.define('text!Templates/signin.tmpl',[],function () { return '\n<div class="signin_flex_form">\n\t<li class="flex_larger">\n\t\t<input type="email" class="signin_flex_input houser-signin-email" placeholder="your@email.com">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="password" class="signin_flex_input houser-signin-password" placeholder="your_password">\n\t</li>\n\t<li class="flex_larger">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_primary houser-submit-signin" value="Login">\n\t</li>\n\t<span class="flex_smaller signin_info_text">If you need an account please register now for free.</span>\n\t<li class="flex_smaller">\n\t\t<input type="button" class="signin_flex_input signin_flex_button signin_secondary houser-register-button" value="Sign Up">\n\t</li>\n</div>\n';});
 
+HOUSER.define('Models/Signin',[
+	'jquery',
+	'underscore',
+	'backbone'
+], function ($, _, Backbone) {
+	'use strict';
+
+	var Model = Backbone.Model.extend({
+		defaults: {
+			id: -1,
+			email: '',
+			password: '',
+			name: ''
+		}
+	});
+
+	return Model;
+});
 HOUSER.define('js/ajax',[], function () {
 	var ajax = function () {
 		return {
@@ -15245,8 +15202,9 @@ HOUSER.define('Views/Signin',[
 	'underscore',
 	'backbone',
 	'text!Templates/signin.tmpl',
+	'Models/Signin',
 	'js/ajax'
-], function ($, _, Backbone, _template, ajax) {
+], function ($, _, Backbone, _template, Model, ajax) {
 	'use strict';
 
 	var View = Backbone.View.extend({
@@ -15259,7 +15217,7 @@ HOUSER.define('Views/Signin',[
 		selector: $('.wrapper'),
 		initialize: function (options) {
 			var self = this,
-				data = options.toJSON();
+				data = new Model();
 
 			self.render(data);
 		},
@@ -15428,203 +15386,74 @@ HOUSER.define('Views/Signup',[
 	return View;
 });
 
-
-HOUSER.define('text!Templates/main.tmpl',[],function () { return '<div class="main">\n\t<div class="menu_bar">\n\t\t<li class="settings houser-settings">settings</li>\n\t\t<li class="add houser-add">add</li>\n\t</div>\n\t<div class="main_wrapper"></div>\n</div>\n';});
-
-HOUSER.define('Views/Main',[
-	'jquery',
-	'underscore',
-	'backbone',
-	'text!Templates/main.tmpl',
-], function ($, _, Backbone, main_template) {
+HOUSER.define('Master/Master_View',['Collections/SubView',
+		'Views/Signin',
+		'Views/Signup'
+], function (SubViewCollection, v_signin, v_signup) {
 	'use strict';
 
-	var WelcomeView = Backbone.View.extend({
-		
-		events: {
-			'click .houser-settings': 'settingsClick',
-			'click .houser-add': 'addClick'
-		},
-		
-		template: _.template(main_template),
-		selector: $('.wrapper'),
+	var MasterView = Backbone.View.extend({
+		subViewCollection: new SubViewCollection(),
 		initialize: function (options) {
-			var self = this,
-				data = options.toJSON() || {};
-
-			self.render(data);
-			
-			
-		},
-		render: function (data) {
-			var self = this;
-
-			self.selector.html(self.template(data));
-			
-			HOUSER.router.navigate('agenda', {trigger: true});
-		},
-		settingsClick: function (e) {
-			// create function to render views on viewmanager without routing. need to keep events.
-			HOUSER.router.navigate('settings');
-		},
-		addClick: function (e) {
-			
-		}
-	});
-
-	return WelcomeView;
-});
-
-
-HOUSER.define('text!Templates/settings.tmpl',[],function () { return '<div class="settings_wrapper houser-settings">\n\t<div class="temp">Settings View</div>\n</div>\n';});
-
-HOUSER.define('Views/Agenda',[
-	'jquery',
-	'underscore',
-	'backbone',
-	'text!Templates/settings.tmpl',
-], function ($, _, Backbone, welcome_template) {
-	'use strict';
-
-	var WelcomeView = Backbone.View.extend({
-		
-		template: _.template(welcome_template),
-		initialize: function (options) {
-			var self = this,
-				data = options.toJSON();
-
-			self.render(data);
-		},
-		render: function (data) {
 			var self = this;
 			
-			$('.main_wrapper').html(self.template(data));
-		}
-	});
+			HOUSER = HOUSER || {};
 
-	return WelcomeView;
-});
-
-HOUSER.define('Views/Settings',[
-	'jquery',
-	'underscore',
-	'backbone',
-	'text!Templates/settings.tmpl',
-], function ($, _, Backbone, settings_template) {
-	'use strict';
-
-	var WelcomeView = Backbone.View.extend({
-		
-		template: _.template(settings_template),
-		initialize: function (options) {
-			var self = this,
-				data = options.toJSON();
-
-			self.render(data);
-		},
-		render: function (data) {
-			var self = this;
+			self.startRouter();
 			
-			$('.main_wrapper').html(self.template(data));
-			window.setTimeout(function () {
-				$('.houser-settings').addClass('show');
-			}, 100);
-		}
-	});
-
-	return WelcomeView;
-});
-
-HOUSER.define(
-	'js/view_manager',['jquery',
-	 'Models/Signin',
-	 'Models/Signup',
-	 'Models/Main',
-	 'Models/Agenda',
-	 'Models/Settings',
-	 'Views/Signin',
-	 'Views/Signup',
-	 'Views/Main',
-	 'Views/Agenda',
-	 'Views/Settings'], 
-	function ($, SigninModel, SignupModel, MainModel, AgendaModel, SettingsModel, SigninView, SignupView, MainView, AgendaView, SettingsView) {
-		
-	var ViewManager = function () {
-		
-		
-		var Models = {
-			signin: SigninModel,
-			signup: SignupModel,
-			agenda: AgendaModel,
-			main: MainModel,
-			settings: SettingsModel
+			self.loadSubViewsIntoCollection();
+			
+			self.routeSubViews();
 		},
-			Views = {
-				signin: SigninView,
-				signup: SignupView,
-				agenda: AgendaView,
-				main: MainView,
-				settings: SettingsView
-			};
-		return {
-			init: function () {
-				var router;
-
-				router = Backbone.Router.extend({
-					routes: {
-						'*notFound': 'test'
-					},
-					test: function () {
-						console.log('test hit');
+		loadSubViewsIntoCollection: function () {
+			subViewCollection.add(new v_signin());
+			subViewCollection.add(new v_signup());
+		},
+		routeSubViews: function () {
+			SubViewCollection.each(function (view) {
+				HOUSER.router.route(view.model.path, HOUSER.router.prototype.handleSubView);
+			});
+		},
+		startRouter: function () {
+			var self = this,
+				Router = Backbone.Router.extend({
+					handleSubView: function (options) {
+						
 					}
-					
-				})
-				
-				if (!Backbone.History.started) {
-					Backbone.history.start();
-				}
-				
-				HOUSER.router = new router();
-				
-				HOUSER.router.on('route', function (x, params) {
-					var route = params[0],
-						view = Views[route],
-						model = Models[route],
-						data = JSON.parse(params[1]);
-					console.log(view);
-					console.log(model);
-					//$.mobile.changePage( '#' + route , { reverse: false, changeHash: false } );
-					new view(new model(data));
-					HOUSER.router.trigger('router-kill-view');
 				});
-			},
-			navigate: function (type, data) {
-				
+			
+			if (!Backbone.History.started) {
+				Backbone.history.start();
 			}
-		};
-	};
-	return new ViewManager();
+			
+			HOUSER.router = new Router();
+		}
+	});
+
+	return MasterView;
 });
+
 HOUSER.define('js/core',[
-	'js/view_manager'
-], function (viewManager) {
+	'Master/Master_View'
+], function (MasterView) {
 	'use strict';
 	
 	var HouserCore = function () {
 		// Load the view manager so routes are handled.
-		viewManager.init();
+		var master_view = new MasterView();
 		
 		return {
 			init: function () {
 				var self = this
 				
-				// IF NAVIGATING FROM ROUTE return to root.
-				Backbone.history.navigate('');
-				
 				// Get cookie or login data
 				// If logged in show main page
 				// if not show login screen.
-				HOUSER.router.navigate('signin', {trigger: true});
+				
+				window.history.pushState({}, 'signin', '/signin');
+				//HOUSER.router.navigate('signin', {trigger: true});
+				
+				
 //				HOUSER.router.navigate('welcome', {trigger: true});
 				
 //				$.ajax({

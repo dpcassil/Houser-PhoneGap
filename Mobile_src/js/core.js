@@ -1,23 +1,24 @@
 define([
-	'js/view_manager'
-], function (viewManager) {
+	'Master/Master_View'
+], function (MasterView) {
 	'use strict';
 	
 	var HouserCore = function () {
 		// Load the view manager so routes are handled.
-		viewManager.init();
+		var master_view = new MasterView();
 		
 		return {
 			init: function () {
 				var self = this
 				
-				// IF NAVIGATING FROM ROUTE return to root.
-				Backbone.history.navigate('');
-				
 				// Get cookie or login data
 				// If logged in show main page
 				// if not show login screen.
-				HOUSER.router.navigate('signin', {trigger: true});
+				
+				window.history.pushState({}, 'signin', '/signin');
+				//HOUSER.router.navigate('signin', {trigger: true});
+				
+				
 //				HOUSER.router.navigate('welcome', {trigger: true});
 				
 //				$.ajax({
