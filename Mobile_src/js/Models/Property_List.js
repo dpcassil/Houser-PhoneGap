@@ -8,8 +8,11 @@ define([
 	var Model = Backbone.Model.extend({
 		defaults: {
 			id: -1,
-			email: '',
-			password: ''
+			name: '',
+			properties: null,
+			type: 1
+		},
+		initialize: function (options) {
 		}
 	});
 

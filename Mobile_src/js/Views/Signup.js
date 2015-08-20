@@ -1,81 +1,112 @@
 define([
-	'jquery',
-	'underscore',
-	'backbone',
+	'Views/SubViewSuper',
 	'text!Templates/signup.tmpl',
+	'Models/Signin',
 	'js/ajax'
-], function ($, _, Backbone, welcome_template, ajax) {
+], function (SubView, welcome_template, Model, ajax) {
 	'use strict';
 
-	var View = Backbone.View.extend({
-		el: $('.wrapper'),
+	var View = SubView.extend({
+
 		events: {
-			'click .houser-submit-signup': 'submitLogin',
-			'click .houser-signin-button': 'signinClick'
+			'keyup .houser_signin_input': 'updateModel',
+			'click .houser-submit-signup': 'submitSignup',
+			'click .houser-signin-button': 'signupClick'
 		},
+		
+		el: $('.wrapper'),
+		selector: '.wrapper',
 		template: _.template(welcome_template),
-		selector: $('.wrapper'),
+
+		/**
+		@Description:	Initialize the view.
+		**/
 		initialize: function (options) {
-			var self = this,
-				data = options.toJSON();
-
-			self.render(data);
-		},
-		render: function (data) {
 			var self = this;
-
-			self.selector.html(self.template(data));
 			
-			$('.houser-signin-email').val(data.email);
-			$('.houser-signin-password').val(data.password);
-			$('.houser-signin-name').val(data.name);
+			options = options || {};
+			
+			self.model = HOUSER.current_view_model = new Model(options.model);
+			self.render();
+		},
+
+		/**
+		@Description:	Render the view.
+		**/
+		render: function () {
+			var self = this,
+				model = self.model;
+
+			$(self.selector).html(self.template(model));
+			
+			$('.houser-signin-email').val(model.get('email'));
+			$('.houser-signin-password').val(model.get('password'));
+			$('.houser-signin-name').val(model.get('name'));
 			
 			window.setTimeout(function () {
 				$('.signin_flex_form').addClass('show');
 			}, 100);
 		},
-		submitLogin: function (e) {
+		
+		/**
+		@Description:	Update model with data from inputs.
+		@Events:		keyup .houser_signin_input
+		**/
+		updateModel: function () {
+			var self = this,
+				model = self.model;
+			
+			model.set({'email': $('.houser-signin-email').val()});
+			model.set({'password': $('.houser-signin-password').val()});
+			model.set({'name': $('.houser-signin-name').val()});
+			
+		},
+		
+		/**
+		@Description:	Submit login, set token, and redirect.
+		@Events:		click .houser-submit-signin
+		**/
+		submitSignup: function (e) {
 			e.preventDefault();
 			
-			var self =this,
-				// Convert service to use these param names.
-				data = {
-					email: $('.houser-signin-email').val(),
-					password: $('.houser-signin-password').val(),
-					name: $('.houser-signin-name').val()
-				};
-			// Create signup service.
-//			ajax.post(data, ajax.service.user.submitLogin, {
-//				success: function (resp) {
-//					if (resp && resp.d && resp.d.authorized) {
-//						HOUSER.USER_TOKEN = resp.d.token;
-//						if (localStorage) {
-//							localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
-//						}
-//						HOUSER.router.navigate('welcome', {trigger: true});
-//					} else {
-//						console.error('User not authorized.');
-//						HOUSER.router.navigate('register', {trigger: true});
-//					}
-//				},
-//				error: function (resp) {
-//					console.error(resp);
-//				}
-//			});
+			var self = this,
+				model = self.model,
+				data;
+			
+			self.updateModel();
+			
+			data = {
+				email: model.get('email'),
+				password: model.get('password'),
+				name: model.get('name')
+			};
+			
+			//
+			//
+			// CREATE SERVICE AND AJAX CALL
+			//
+			//
+			
 			HOUSER.router.navigate('welcome', {trigger: true});
 		},
-		signinClick: function (e) {
+
+		/**
+		@Description:	Submit login, set token, and redirect.
+		@Events:		click .houser-register-button
+		**/
+		signupClick: function (e) {
 			e.preventDefault();
 			
 			var self =this,
 				data = {
-					email: $('.houser-signin-email').val(),
-					password: $('.houser-signin-password').val(),
-					name: $('.houser-signin-name').val()
+					model: {
+						email: self.model.get('email'),
+						password: self.model.get('password'),
+						name: self.model.get('name')
+					}
 				};
-			HOUSER.router.navigate('signin?' + JSON.stringify(data), {trigger: true});
-
-		}
+			HOUSER.router.navigate('signin?' + JSON.stringify(data), {trigger: true});	
+		},
 	});
 
 	return View;

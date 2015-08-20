@@ -7,6 +7,7 @@ define([
 
 	var Model = Backbone.Model.extend({
 		defaults: {
+			path: 'signup',
 			id: -1,
 			email: '',
 			password: ''
