@@ -15165,9 +15165,13 @@ HOUSER.define('Models/Signin',[
 HOUSER.define('js/ajax',[], function () {
 	var ajax = function () {
 		return {
+			api_keys: {
+				zillow: 'X1-ZWz1dehfmymz2j_7vqv1'
+			},
 			servers: {
 				live: 'http://houser-2.apphb.com/WebUtilities/',
-				dev: 'http://houser/WebUtilities/'
+				dev: 'http://houser/WebUtilities/',
+				zillow: 'http://www.zillow.com/webservice/'
 			},
 			service: {
 				details: {
@@ -15179,6 +15183,9 @@ HOUSER.define('js/ajax',[], function () {
 				},
 				user: {
 					submitLogin: 'UserService.asmx/SubmitLogin'
+				},
+				zillow: {
+					deepSearch: 'GetDeepSearchResults.htm'
 				}
 			},
 			post: function (data, service, callback) {
@@ -15188,13 +15195,16 @@ HOUSER.define('js/ajax',[], function () {
 				$.ajax({
 					type: method,
 					contentType: "application/json; charset=utf-8",
-					url: this.servers.dev + service,
+					url: this.servers.live + service,
 					data: JSON.stringify(data),
 					dataType: "json",
 					async: true,
 					success: callback.success,
 					error: callback.error
 				});
+			},
+			genericCallXML: function (method, data, server, service, callback) {
+				$.get(server + service, data).done(callback.success).fail(callback.error);
 			}
 		};
 	};
@@ -15465,6 +15475,9 @@ HOUSER.define('Views/Signup',[
 	return View;
 });
 
+
+HOUSER.define('text!Templates/property_lists.tmpl',[],function () { return '<div class="pages_flex_wrapper">\n\t<ul class"pages_lists_list">\n\t\t<%_.each(lists, function (list) { %>\n\t\t\t<li class="flex_larger houser_prop_list" data-list=<%=list.get(\'name\')%>>\n\t\t\t\t<div><%=list.get(\'name\')%></div>  |  <div><%=list.get(\'properties\').length%></div>\n\t\t\t</li>\n\t\t<%});%>\n\t</ul>\n</div>\n';});
+
 HOUSER.define('Models/Property_List',[
 	'jquery',
 	'underscore',
@@ -15480,6 +15493,7 @@ HOUSER.define('Models/Property_List',[
 			type: 1
 		},
 		initialize: function (options) {
+			//console.log(options);
 		}
 	});
 
@@ -15496,14 +15510,43 @@ HOUSER.define('Models/Property',[
 	var PropertyModel = Backbone.Model.extend({
 		defaults: {
 			id: -1,
-			address: "",
-			city: "",
-			state: ""
+			address: '',
+			city: '',
+			state: 'OK'
+		},
+		initialize: function (options) {
+			var self = this;
+
+			self.set('id', self.get('AccountNumber'));
+			//console.log(options);
+			self.SetAddressValues(options);
+			//console.log(this)
+		},
+		SetAddressValues: function (options) {
+			var self = this,
+				_address = options.Address,
+				_city = self.getCity(_address);
+
+			self.set('city', _city.trim());
+			self.set('address', _address.replace(_city, '').replace(',', '').trim());
+		},
+		getCity: function (address) {
+			var self = this,
+				_city = 'n/a';
+
+			_.each(['OKLAHOMA CITY', 'EDMOND', 'HARRAH', 'CHOCTAW', 'DEL CITY', 'MIDWEST CITY'], function (city) {
+				if (address.indexOf(city) !== -1) {
+					_city = city;
+					return _city;
+				}
+			});
+			return _city;
 		}
 	});
 
 	return PropertyModel;
 });
+
 HOUSER.define('Collections/Property',[
 	'jquery',
 	'underscore',
@@ -15535,7 +15578,7 @@ HOUSER.define('Collections/Property_List',[
 
 HOUSER.define('Views/Property_Lists',[
 	'Views/SubViewSuper',
-	'text!Templates/signin.tmpl',
+	'text!Templates/property_lists.tmpl',
 	'Models/Property_List',
 	'Collections/Property',
 	'Collections/Property_List',
@@ -15546,6 +15589,7 @@ HOUSER.define('Views/Property_Lists',[
 	var View = SubView.extend({
 
 		events: {
+			'click .houser_prop_list': 'loadPropertyListClick'
 		},
 
 		el: $('.wrapper'),
@@ -15562,9 +15606,15 @@ HOUSER.define('Views/Property_Lists',[
 			options = options || {};
 
 			self.getAllProperties().done(function (data) {
-				console.log(data);
+				//console.log(data);
 				self.makeCollections(data);
+				self.render();
 			});
+		},
+		render: function () {
+			var self = this;
+
+			$(self.selector).html(self.template({lists: self.property_list_collections.models}));
 		},
 
 		getAllProperties: function () {
@@ -15572,7 +15622,7 @@ HOUSER.define('Views/Property_Lists',[
 				data;
 
 			if (localStorage) {
-				data = {token: localStorage.getItem("houser_login_token")};
+				data = {token: localStorage.getItem("houser_login_token") || ''};
 			}
 
 			ajax.post(data, ajax.service.props.getAllSaleProperties, {
@@ -15599,13 +15649,245 @@ HOUSER.define('Views/Property_Lists',[
 			_.each(data, function(list, key) {
 				self.property_list_collections.add(
 					new Model({
+						id: key,
 						name: key,
 						properties: new PropertyCollection(list)
 					})
 				)
 			});
 
-			console.log(self.property_list_collections);
+			//console.log(self.property_list_collections);
+		},
+
+		// EVENT FUNCTIONS
+
+		loadPropertyListClick: function (e) {
+			var self = this,
+				target = $(e.target),
+				li_el = target.closest('li'),
+				list;
+
+				HOUSER.current_list = self.property_list_collections.findWhere({id: li_el.data("list")});
+				HOUSER.router.navigate('property_list', {trigger: true});
+		}
+	});
+
+	return View;
+});
+
+
+HOUSER.define('text!Templates/property_list.tmpl',[],function () { return '<div class="pages_flex_wrapper">\n\t<h3><%=list.get(\'name\')%></h3>\n\t<ul class"pages_lists_list">\n\t\t<%_.each(list.get(\'properties\').models, function (prop) { %>\n\t\t\t<li class="flex_larger houser_prop_item" data-id=<%=prop.get(\'id\')%>>\n\t\t\t\t<div><%=prop.get(\'city\')%><%=prop.get(\'address\')%><%=prop.get(\'state\')%></div>\n\t\t\t</br>\n\t\t\t</li>\n\t\t<%});%>\n\t</ul>\n</div>\n';});
+
+HOUSER.define('Views/Property_List',[
+	'Views/SubViewSuper',
+	'text!Templates/property_list.tmpl',
+	'js/ajax'
+], function (SubView, _template, ajax) {
+	'use strict';
+
+	var View = SubView.extend({
+
+		events: {
+			'click .houser_prop_item': 'propClick'
+		},
+
+		el: $('.wrapper'),
+		selector: '.wrapper',
+		template: _.template(_template),
+
+		/**
+		@Description:	Initialize the view.
+		**/
+		initialize: function (options) {
+			var self = this;
+
+			options = options || {};
+
+			self.model = HOUSER.current_view_model = HOUSER.current_list;
+			self.render();
+		},
+
+		/**
+		@Description:	Render the view.
+		**/
+		render: function () {
+			var self = this,
+				model = self.model;
+
+			$(self.selector).html(self.template({list: self.model}));
+
+			window.setTimeout(function () {
+				$('.signin_flex_form').addClass('show');
+			}, 100);
+
+		},
+		propClick: function (e) {
+			var self = this,
+				target = $(e.target).closest('li'),
+				prop = target.data("id");
+
+			HOUSER.current_prop = self.model.get('properties').findWhere({id: prop});
+			HOUSER.router.navigate('property', {trigger: true});
+		}
+	});
+
+	return View;
+});
+
+
+HOUSER.define('text!Templates/property.tmpl',[],function () { return '<div class="property">\n\t<div class="propertyImage_wrapper">\n\t\t<div></div>\n\t</div>\n\t<div class="propertyDetails">\n\t\t<div class="propertyDetails_address">\n\t\t\t<span><%=prop.get(\'address\')%></span>\n\t\t\t<span>|</span>\n\t\t\t<span><%=prop.get(\'city\')%></span>\n\t\t</div>\n\t\t<div class="propertyDetails_primary">\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'beds\')%> Beds</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'baths\')%> Baths</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'sqft\')%> sqft</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item">Built <%=prop.get(\'year_built\')%></span>\n\t\t</div>\n\t\t<div class="propertyDetails_secondary">\n\t\t\t<span class="propertyDetails_secondary_item">Lot <%=prop.get(\'lot\')%> sqft</span>\n\t\t</div>\n\t\t<div class="propertyDetials_price">\n\t\t\t<span class="propertyDetials_price_item">Price $<%=prop.get(\'SalePrice\')%> (min $<%=prop.get(\'SalePrice\')*.666%>)</span>\n\t\t</div>\n\t\t<div class="propertyDetails_additional">\n\t\t\t<span>Zillow Valuation</span>\n\t\t\t<ul class="propertyDetails_valuation">\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">Low: $<%=prop.get(\'zest_low\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">AVG: $<%=prop.get(\'zest_avg\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">High: $<%=prop.get(\'zest_high\')%></span>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t\t<span>Zillow Property History</span>\n\t\t\t<ul class="propertyDetails_history">\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_history_item">Date: <%=prop.get(\'last_sold_date\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_history_item">Price: <%=prop.get(\'last_sold_price\')%></span>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\n\t</div>\n</div>\n';});
+
+HOUSER.define('js/xml',[], function () {
+	var xml = function () {
+		return {
+			toJSON: function (xml) {
+
+				// Create the return object
+				var self = this,
+					obj = {};
+
+				if (xml.nodeType == 1) { // element
+					// do attributes
+					if (xml.attributes.length > 0) {
+					obj["@attributes"] = {};
+						for (var j = 0; j < xml.attributes.length; j++) {
+							var attribute = xml.attributes.item(j);
+							obj["@attributes"][attribute.nodeName] = attribute.nodeValue;
+						}
+					}
+				} else if (xml.nodeType == 3) { // text
+					obj = xml.nodeValue;
+				}
+
+				// do children
+				if (xml.hasChildNodes()) {
+					for(var i = 0; i < xml.childNodes.length; i++) {
+						var item = xml.childNodes.item(i);
+						var nodeName = item.nodeName;
+						if (typeof(obj[nodeName]) == "undefined") {
+							obj[nodeName] = self.toJSON(item);
+						} else {
+							if (typeof(obj[nodeName].push) == "undefined") {
+								var old = obj[nodeName];
+								obj[nodeName] = [];
+								obj[nodeName].push(old);
+							}
+							obj[nodeName].push(self.toJSON(item));
+						}
+					}
+				}
+				return obj;
+			}
+		};
+	};
+	return new xml();
+})
+;
+HOUSER.define('Views/Property',[
+	'Views/SubViewSuper',
+	'text!Templates/property.tmpl',
+	'js/ajax',
+	'js/xml'
+], function (SubView, _template, ajax, xml) {
+	'use strict';
+
+	var View = SubView.extend({
+
+		events: {
+		},
+
+		el: $('.wrapper'),
+		selector: '.wrapper',
+		template: _.template(_template),
+
+		/**
+		@Description:	Initialize the view.
+		**/
+		initialize: function (options) {
+			var self = this;
+
+			options = options || {};
+
+			self.model = HOUSER.current_view_model = HOUSER.current_prop;
+			self.addExtraData().done(function () {
+
+				//console.log(data);
+				self.render();
+			});;
+
+		},
+
+		/**
+		@Description:	Get data from zillow and or other sources..
+		**/
+		addExtraData: function () {
+			var self = this,
+				deferred = $.Deferred(),
+				model = self.model,
+				data;
+
+			data = {
+				'zws-id': ajax.api_keys.zillow,
+				address: (model.get('address')),
+				citystatezip: (model.get('city') + '+' + model.get('state'))
+			};
+
+			ajax.genericCallXML('POST', data, ajax.servers.zillow, ajax.service.zillow.deepSearch, {
+				success: function (resp) {
+					if (resp) {
+						var zd;
+						if (resp.getElementsByTagName('result').length) {
+							zd = xml.toJSON(resp.getElementsByTagName('result')[0]);
+							model.set('zpid', zd.zpid['#text']);
+							model.set('baths', zd.bathrooms['#text']);
+							model.set('beds', zd.bedrooms['#text']);
+							model.set('sqft', zd.finishedSqFt['#text']);
+							model.set('lot', zd.lotSizeSqFt['#text']);
+							model.set('year_built', zd.yearBuilt['#text']);
+							model.set('zest_avg', self.asDollar(zd.zestimate.amount['#text']));
+							model.set('zest_high', self.asDollar(zd.zestimate.valuationRange.high['#text']));
+							model.set('zest_low', self.asDollar(zd.zestimate.valuationRange.low['#text']));
+							model.set('last_sold_date', zd.lastSoldDate ? zd.lastSoldDate['#text'] : 'na');
+							model.set('last_sold_price', zd.lastSoldPrice ? $ + self.asDollar(zd.lastSoldPrice['#text']) : 'na');
+							deferred.resolve();
+						} else {
+							console.log('Error! Zillow says: ' + $(resp.getElementsByTagName('message')).find('text').text());
+							deferred.resolve();
+						}
+
+					} else {
+						alert('Unkown zillow error.');
+					}
+				},
+				error: function (resp) {
+					console.error(resp);
+					deferred.reject();
+				}
+			});
+			return deferred;
+		},
+
+		/**
+		@Description:	Render the view.
+		**/
+		render: function () {
+			var self = this,
+				model = self.model;
+
+			$(self.selector).html(self.template({prop: self.model}));
+
+			window.setTimeout(function () {
+				$('.signin_flex_form').addClass('show');
+			}, 100);
+
+		},
+		// move to unit class
+		asDollar: function (n) {
+			n = parseInt(n);
+			return n.toFixed(2).replace(/./g, function(c, i, a) {
+			    return i && c !== "." && ((a.length - i) % 3 === 0) ? ',' + c : c;
+			});
+			// body...
 		}
 	});
 
@@ -15615,8 +15897,10 @@ HOUSER.define('Views/Property_Lists',[
 HOUSER.define('Master/Master_View',['Collections/SubView',
 		'Views/Signin',
 		'Views/Signup',
-		'Views/Property_Lists'
-], function (SubViewCollection, v_signin, v_signup, v_property_lists) {
+		'Views/Property_Lists',
+		'Views/Property_List',
+		'Views/Property'
+], function (SubViewCollection, v_signin, v_signup, v_property_lists, v_property_list, v_property) {
 	'use strict';
 
 	/**
@@ -15628,6 +15912,9 @@ HOUSER.define('Master/Master_View',['Collections/SubView',
 		liveSubView: null,
 		el: $('.master_wrapper'),
 
+		events: {
+
+		},
 		initialize: function (options) {
 			var self = this;
 
@@ -15640,6 +15927,8 @@ HOUSER.define('Master/Master_View',['Collections/SubView',
 			self.loadSubViewsIntoCollection();
 
 			self.startBackboneListener();
+
+			self.bindPersistentListeners();
 		},
 
 		/**
@@ -15651,6 +15940,8 @@ HOUSER.define('Master/Master_View',['Collections/SubView',
 			self.subViewCollection.add({View: v_signup, path: 'signup' });
 			self.subViewCollection.add({View: v_signin, path: 'signin' });
 			self.subViewCollection.add({View: v_property_lists, path: 'property_lists'});
+			self.subViewCollection.add({View: v_property_list, path: 'property_list'});
+			self.subViewCollection.add({View: v_property, path: 'property'});
 		},
 
 		/**
@@ -15697,6 +15988,14 @@ HOUSER.define('Master/Master_View',['Collections/SubView',
 			Backbone.History.started || Backbone.history.start();
 
 			HOUSER.router = new Router();
+		},
+		navigateBack: function () {
+			window.history.back();
+		},
+		bindPersistentListeners: function () {
+			var self = this;
+
+			$('.houser_navigate_back').on('click', self.navigateBack);
 		}
 	});
 

@@ -1,8 +1,10 @@
 define(['Collections/SubView',
 		'Views/Signin',
 		'Views/Signup',
-		'Views/Property_Lists'
-], function (SubViewCollection, v_signin, v_signup, v_property_lists) {
+		'Views/Property_Lists',
+		'Views/Property_List',
+		'Views/Property'
+], function (SubViewCollection, v_signin, v_signup, v_property_lists, v_property_list, v_property) {
 	'use strict';
 
 	/**
@@ -14,6 +16,9 @@ define(['Collections/SubView',
 		liveSubView: null,
 		el: $('.master_wrapper'),
 
+		events: {
+
+		},
 		initialize: function (options) {
 			var self = this;
 
@@ -26,6 +31,8 @@ define(['Collections/SubView',
 			self.loadSubViewsIntoCollection();
 
 			self.startBackboneListener();
+
+			self.bindPersistentListeners();
 		},
 
 		/**
@@ -37,6 +44,8 @@ define(['Collections/SubView',
 			self.subViewCollection.add({View: v_signup, path: 'signup' });
 			self.subViewCollection.add({View: v_signin, path: 'signin' });
 			self.subViewCollection.add({View: v_property_lists, path: 'property_lists'});
+			self.subViewCollection.add({View: v_property_list, path: 'property_list'});
+			self.subViewCollection.add({View: v_property, path: 'property'});
 		},
 
 		/**
@@ -83,6 +92,14 @@ define(['Collections/SubView',
 			Backbone.History.started || Backbone.history.start();
 
 			HOUSER.router = new Router();
+		},
+		navigateBack: function () {
+			window.history.back();
+		},
+		bindPersistentListeners: function () {
+			var self = this;
+
+			$('.houser_navigate_back').on('click', self.navigateBack);
 		}
 	});
 

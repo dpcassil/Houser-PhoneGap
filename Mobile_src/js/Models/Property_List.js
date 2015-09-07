@@ -13,6 +13,7 @@ define([
 			type: 1
 		},
 		initialize: function (options) {
+			//console.log(options);
 		}
 	});
 

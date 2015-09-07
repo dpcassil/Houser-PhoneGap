@@ -1,0 +1,11 @@
+<div class="pages_flex_wrapper">
+	<h3><%=list.get('name')%></h3>
+	<ul class"pages_lists_list">
+		<%_.each(list.get('properties').models, function (prop) { %>
+			<li class="flex_larger houser_prop_item" data-id=<%=prop.get('id')%>>
+				<div><%=prop.get('city')%><%=prop.get('address')%><%=prop.get('state')%></div>
+			</br>
+			</li>
+		<%});%>
+	</ul>
+</div>
