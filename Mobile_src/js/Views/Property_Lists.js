@@ -75,7 +75,14 @@ define([
 						name: key,
 						properties: new PropertyCollection(list)
 					})
-				)
+				);
+
+				 _.each(list, function(item) {
+					 var parsePropertyObject = new Parse.Object('propertyObject', item);
+					 //parsePropertyObject.save({key: key});
+				 })
+				var parsePropertyCollection = new Parse.Object('PropertyCollection');
+				//parsePropertyCollection.save({key: key});
 			});
 
 			//console.log(self.property_list_collections);

@@ -2,8 +2,9 @@ define([
 	'Views/SubViewSuper',
 	'text!Templates/property.tmpl',
 	'js/ajax',
-	'js/xml'
-], function (SubView, _template, ajax, xml) {
+	'js/xml',
+	'js/temp_ps'
+], function (SubView, _template, ajax, xml, tps) {
 	'use strict';
 
 	var View = SubView.extend({
@@ -20,6 +21,13 @@ define([
 		**/
 		initialize: function (options) {
 			var self = this;
+
+			tps.getSherifSaleDates().done(function (dates) {
+				_.each(dates, function (date) {
+					tps.getSherifSalePropertiesByDate(date);
+				})
+
+			});
 
 			options = options || {};
 

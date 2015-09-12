@@ -1,0 +1,25 @@
+$module-selector: '.propertyLists';
+
+#{$module-selector} {
+   margin: 0;
+   padding: 0 10px;
+   &_list {
+      display: flex;
+      display: -webkit-flex;
+      justify-content: space-between;
+      -webkit-justify-content: space-between;
+      list-style: none;
+      padding: 10px;
+      border-bottom: 1px solid white;
+      cursor: pointer;
+   }
+   &_item {
+      font-weight: 200;
+      text-align: center;
+      margin-right: 20px;
+      font-size: 12pt;
+      display: inline-block;
+      -webkit-flex-grow: 1;
+      flex-grow: 1;
+   }
+}
