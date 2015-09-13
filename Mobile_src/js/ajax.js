@@ -11,14 +11,7 @@ define([], function () {
 			},
 			service: {
 				details: {
-					getPropertyByDate: 'Properties.asmx/GetPropertiesBySaleDate'
-				},
-				props: {
-					test: 'Properties.asmx/GetTest',
-					getAllSaleProperties: 'Properties.asmx/GetAllSalesData'
-				},
-				user: {
-					submitLogin: 'UserService.asmx/SubmitLogin'
+					getPropertyByDate: 'DetailsWebService.asmx/GetSaleDates'
 				},
 				zillow: {
 					deepSearch: 'GetDeepSearchResults.htm'

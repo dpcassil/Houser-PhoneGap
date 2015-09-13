@@ -22,13 +22,6 @@ define([
 		initialize: function (options) {
 			var self = this;
 
-			tps.getSherifSaleDates().done(function (dates) {
-				_.each(dates, function (date) {
-					tps.getSherifSalePropertiesByDate(date);
-				})
-
-			});
-
 			options = options || {};
 
 			self.model = HOUSER.current_view_model = HOUSER.current_prop;

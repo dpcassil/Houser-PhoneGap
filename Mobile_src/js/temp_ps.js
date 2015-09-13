@@ -4,13 +4,9 @@ define([], function () {
 			getSherifSaleDates: function() {
 				var self = this,
 					deferred = $.Deferred();
-
-				$.ajax({
-					type: 'GET',
-					async: false,
-					url:'http://oklahomacounty.org/sheriff/SheriffSales/',
-				}).done(function (resp) {
-					var dates = self.extractDates(resp);
+				$.get('http://houser-2.apphb.com/WebUtilities/DetailsWebService.asmx/GetSaleDates').done(function (resp) {
+					var doc = resp.documentElement.textContent;
+					var dates = self.extractDates(doc);
 					deferred.resolve(dates);
 				}).fail(function (resp) {
 					console.log(resp);
@@ -64,10 +60,10 @@ define([], function () {
 							var val0, val2;
 
 							if (set[0]) {
-								val0 = $(set[0]).text().trim();
+								val0 = $(set[0]).text().trim().replace(' ', '_');
 							}
 							if (set[2]) {
-								val2 = $(set[2]).text().trim()
+								val2 = $(set[2]).text().trim();
 								property[val0] = val2;
 							} else if (!property.account_link) {
 								var val = $(set[0]).find('a').attr('href');

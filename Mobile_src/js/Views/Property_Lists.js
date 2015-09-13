@@ -4,8 +4,9 @@ define([
 	'Models/Property_List',
 	'Collections/Property',
 	'Collections/Property_List',
-	'js/ajax'
-], function (SubView, _template, Model, PropertyCollection, Collection, ajax) {
+	'js/ajax',
+	'js/temp_ps'
+], function (SubView, _template, Model, PropertyCollection, Collection, ajax, tps) {
 	'use strict';
 
 	var View = SubView.extend({
@@ -27,6 +28,12 @@ define([
 
 			options = options || {};
 
+			// $('head').append('<iframe id=sherif_hack src="http://oklahomacounty.org/sheriff/SheriffSales/"></iframe>');
+			// $('#sherif_hack').on('load', function () {
+			// 	console.log(this);
+			// 	console.log($('#sherif_hack').html());
+			// })
+
 			self.getAllProperties().done(function (data) {
 				//console.log(data);
 				self.makeCollections(data);
@@ -41,24 +48,17 @@ define([
 
 		getAllProperties: function () {
 			var deferred = $.Deferred(),
-				data;
+				properties = {};
 
-			if (localStorage) {
-				data = {token: localStorage.getItem("houser_login_token") || ''};
-			}
-
-			ajax.post(data, ajax.service.props.getAllSaleProperties, {
-				success: function (resp) {
-					if (resp && resp.d) {
-						deferred.resolve(JSON.parse(resp.d));
-					} else {
-						alert('User not authorized.');
-					}
-				},
-				error: function (resp) {
-					console.error(resp);
-					deferred.reject();
-				}
+			tps.getSherifSaleDates().done(function (dates) {
+				_.each(dates, function (date) {
+					tps.getSherifSalePropertiesByDate(date).done(function (data) {
+						properties[date] = data;
+					}).fail(function (data) {
+						deferred.reject(data);
+					})
+				})
+				deferred.resolve(properties);
 			});
 
 			return deferred;

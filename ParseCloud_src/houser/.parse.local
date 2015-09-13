@@ -1,0 +1,10 @@
+{
+  "applications": {
+    "_default": {
+      "link": "houser"
+    },
+    "houser": {
+      "applicationId": "93V9ZnU9nmta5O88zOTQ7vrorfsmf9n7biraFaZm"
+    }
+  }
+}

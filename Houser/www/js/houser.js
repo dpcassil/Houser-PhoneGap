@@ -15175,14 +15175,7 @@ HOUSER.define('js/ajax',[], function () {
 			},
 			service: {
 				details: {
-					getPropertyByDate: 'Properties.asmx/GetPropertiesBySaleDate'
-				},
-				props: {
-					test: 'Properties.asmx/GetTest',
-					getAllSaleProperties: 'Properties.asmx/GetAllSalesData'
-				},
-				user: {
-					submitLogin: 'UserService.asmx/SubmitLogin'
+					getPropertyByDate: 'DetailsWebService.asmx/GetSaleDates'
 				},
 				zillow: {
 					deepSearch: 'GetDeepSearchResults.htm'
@@ -15287,29 +15280,29 @@ HOUSER.define('Views/Signin',[
 
 			self.updateModel();
 
-			data = {
-				email: model.get('email'),
-				password: model.get('password')
-			};
+			// data = {
+			// 	email: model.get('email'),
+			// 	password: model.get('password')
+			// };
 
-			// Need to finish making service.
-			ajax.post(data, ajax.service.user.submitLogin, {
-				success: function (resp) {
-					if (resp && resp.d && resp.d.authorized) {
-						HOUSER.USER_TOKEN = resp.d.token;
-						if (localStorage) {
-							localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
-						}
-						HOUSER.router.navigate('property_lists', {trigger: true});
-					} else {
-						alert('User not authorized.');
-					}
-				},
-				error: function (resp) {
-					console.error(resp);
-				}
-			});
-			//HOUSER.router.navigate('welcome', {trigger: true});
+			// Convert to parse.
+			// ajax.post(data, ajax.service.user.submitLogin, {
+			// 	success: function (resp) {
+			// 		if (resp && resp.d && resp.d.authorized) {
+			// 			HOUSER.USER_TOKEN = resp.d.token;
+			// 			if (localStorage) {
+			// 				localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
+			// 			}
+			// 			HOUSER.router.navigate('property_lists', {trigger: true});
+			// 		} else {
+			// 			alert('User not authorized.');
+			// 		}
+			// 	},
+			// 	error: function (resp) {
+			// 		console.error(resp);
+			// 	}
+			// });
+			HOUSER.router.navigate('property_lists', {trigger: true});
 		},
 
 		/**
@@ -15328,30 +15321,6 @@ HOUSER.define('Views/Signin',[
 					}
 				};
 			HOUSER.router.navigate('signup?' + JSON.stringify(data), {trigger: true});
-		},
-
-		/**
-		@TEST:		Remove after testing.
-		**/
-		testGetProps: function () {
-			var self = this,
-				data = {
-					sDate: '7/2/2015',
-					list: 2,
-					token: HOUSER.USER_TOKEN
-				};
-			ajax.post(data, ajax.service.props.test, {
-				success: function (resp) {
-					if (resp && resp.d) {
-						console.log(resp.d);
-					} else {
-						console.error('User not authorized.');
-					}
-				},
-				error: function (resp) {
-					console.error(resp);
-				}
-			});
 		}
 	});
 
@@ -15574,14 +15543,99 @@ HOUSER.define('Collections/Property_List',[
 	return PropertyListCollection;
 });
 
+HOUSER.define('js/temp_ps',[], function () {
+	var tps = function () {
+		return {
+			getSherifSaleDates: function() {
+				var self = this,
+					deferred = $.Deferred();
+				$.get('http://houser-2.apphb.com/WebUtilities/DetailsWebService.asmx/GetSaleDates').done(function (resp) {
+					var doc = resp.documentElement.textContent;
+					var dates = self.extractDates(doc);
+					deferred.resolve(dates);
+				}).fail(function (resp) {
+					console.log(resp);
+					deferred.reject();
+				});
+
+				return deferred;
+			},
+			extractDates: function (resp) {
+				var dates = [];
+
+				if (resp !== '') {
+					resp = resp.replace(/<img\b[^>]*>/ig, '');
+					$(resp).find('form').find('option').each(function() {
+						dates.push(this.text);
+					});
+				}
+
+				return dates;
+			},
+			getSherifSalePropertiesByDate: function (date) {
+				var self = this,
+					deferred = $.Deferred(),
+					data = {	SaleDates: date };
+
+				$.ajax({
+					type: 'POST',
+					async: false,
+					data: data,
+					url:'http://oklahomacounty.org/sheriff/SheriffSales/saledetail.asp',
+				}).done(function (resp) {
+					var properties = self.extractProperties(resp);
+					deferred.resolve(properties);
+				}).fail(function (resp) {
+					console.log(resp);
+					deferred.reject();
+				});
+
+				return deferred;
+			},
+			extractProperties: function (resp) {
+				var properties = [];
+
+				if (resp !== '') {
+					resp = resp.replace(/<img\b[^>]*>/ig, '');
+					$(new DOMParser().parseFromString(resp, 'text/html')).find('body table:nth-of-type(3) td:nth-of-type(4) table').each(function () {
+						var property = {};
+						$(this).find('tr').each(function () {
+
+							var set = $(this).find('td');
+							var val0, val2;
+
+							if (set[0]) {
+								val0 = $(set[0]).text().trim().replace(' ', '_');
+							}
+							if (set[2]) {
+								val2 = $(set[2]).text().trim();
+								property[val0] = val2;
+							} else if (!property.account_link) {
+								var val = $(set[0]).find('a').attr('href');
+								property.account_link = val;
+								property.account_id = val.substring(val.indexOf('TNO=')).replace('TNO=', '');
+							}
+						});
+						properties.push(property);
+					});
+				}
+				console.log(properties);
+				return properties;
+			}
+		};
+	};
+	return new tps();
+})
+;
 HOUSER.define('Views/Property_Lists',[
 	'Views/SubViewSuper',
 	'text!Templates/property_lists.tmpl',
 	'Models/Property_List',
 	'Collections/Property',
 	'Collections/Property_List',
-	'js/ajax'
-], function (SubView, _template, Model, PropertyCollection, Collection, ajax) {
+	'js/ajax',
+	'js/temp_ps'
+], function (SubView, _template, Model, PropertyCollection, Collection, ajax, tps) {
 	
 
 	var View = SubView.extend({
@@ -15603,6 +15657,12 @@ HOUSER.define('Views/Property_Lists',[
 
 			options = options || {};
 
+			// $('head').append('<iframe id=sherif_hack src="http://oklahomacounty.org/sheriff/SheriffSales/"></iframe>');
+			// $('#sherif_hack').on('load', function () {
+			// 	console.log(this);
+			// 	console.log($('#sherif_hack').html());
+			// })
+
 			self.getAllProperties().done(function (data) {
 				//console.log(data);
 				self.makeCollections(data);
@@ -15617,24 +15677,17 @@ HOUSER.define('Views/Property_Lists',[
 
 		getAllProperties: function () {
 			var deferred = $.Deferred(),
-				data;
+				properties = {};
 
-			if (localStorage) {
-				data = {token: localStorage.getItem("houser_login_token") || ''};
-			}
-
-			ajax.post(data, ajax.service.props.getAllSaleProperties, {
-				success: function (resp) {
-					if (resp && resp.d) {
-						deferred.resolve(JSON.parse(resp.d));
-					} else {
-						alert('User not authorized.');
-					}
-				},
-				error: function (resp) {
-					console.error(resp);
-					deferred.reject();
-				}
+			tps.getSherifSaleDates().done(function (dates) {
+				_.each(dates, function (date) {
+					tps.getSherifSalePropertiesByDate(date).done(function (data) {
+						properties[date] = data;
+					}).fail(function (data) {
+						deferred.reject(data);
+					})
+				})
+				deferred.resolve(properties);
 			});
 
 			return deferred;
@@ -15738,7 +15791,7 @@ HOUSER.define('Views/Property_List',[
 	return View;
 });
 
-HOUSER.define('text!Templates/property.tmpl',[],function () { return '<div class="property">\n\t<div class="propertyImage_wrapper">\n\t\t<div></div>\n\t</div>\n\t<div class="propertyDetails">\n\t\t<div class="propertyDetails_address">\n\t\t\t<span><%=prop.get(\'address\')%></span>\n\t\t\t<span>|</span>\n\t\t\t<span><%=prop.get(\'city\')%></span>\n\t\t</div>\n\t\t<div class="propertyDetails_primary">\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'beds\')%> Beds</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'baths\')%> Baths</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'sqft\')%> sqft</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item">Built <%=prop.get(\'year_built\')%></span>\n\t\t</div>\n\t\t<div class="propertyDetails_secondary">\n\t\t\t<span class="propertyDetails_secondary_item">Lot <%=prop.get(\'lot\')%> sqft</span>\n\t\t</div>\n\t\t<div class="propertyDetials_price">\n\t\t\t<span class="propertyDetials_price_item">Price $<%=prop.get(\'SalePrice\')%> (min $<%=prop.get(\'SalePrice\')*.666%>)</span>\n\t\t</div>\n\t\t<div class="propertyDetails_additional">\n\t\t\t<span>Zillow Valuation</span>\n\t\t\t<ul class="propertyDetails_valuation">\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">Low: $<%=prop.get(\'zest_low\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">AVG: $<%=prop.get(\'zest_avg\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">High: $<%=prop.get(\'zest_high\')%></span>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t\t<span>Zillow Property History</span>\n\t\t\t<ul class="propertyDetails_history">\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_history_item">Date: <%=prop.get(\'last_sold_date\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_history_item">Price: <%=prop.get(\'last_sold_price\')%></span>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\n\t</div>\n</div>\n';});
+HOUSER.define('text!Templates/property.tmpl',[],function () { return '<div class="property">\n\t<div class="propertyImage_wrapper">\n\t\t<div></div>\n\t</div>\n\t<div class="propertyDetails">\n\t\t<div class="propertyDetails_address">\n\t\t\t<span><%=prop.get(\'address\')%></span>\n\t\t\t<span>|</span>\n\t\t\t<span><%=prop.get(\'city\')%></span>\n\t\t</div>\n\t\t\n\t\t<div class="propertyDetails_primary">\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'beds\')%> Beds</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'baths\')%> Baths</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item"><%=prop.get(\'sqft\')%> sqft</span>\n\t\t\t<span class="propertyDetails_primary_item">|</span>\n\t\t\t<span class="propertyDetails_primary_item">Built <%=prop.get(\'year_built\')%></span>\n\t\t</div>\n\t\t<div class="propertyDetails_secondary">\n\t\t\t<span class="propertyDetails_secondary_item">Lot <%=prop.get(\'lot\')%> sqft</span>\n\t\t</div>\n\t\t<div class="propertyDetials_price">\n\t\t\t<span class="propertyDetials_price_item">Price $<%=prop.get(\'SalePrice\')%> (min $<%=prop.get(\'SalePrice\')*.666%>)</span>\n\t\t</div>\n\t\t<div class="propertyDetails_additional">\n\t\t\t<span>Zillow Valuation</span>\n\t\t\t<ul class="propertyDetails_valuation">\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">Low: $<%=prop.get(\'zest_low\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">AVG: $<%=prop.get(\'zest_avg\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_valuation_item">High: $<%=prop.get(\'zest_high\')%></span>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t\t<span>Zillow Property History</span>\n\t\t\t<ul class="propertyDetails_history">\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_history_item">Date: <%=prop.get(\'last_sold_date\')%></span>\n\t\t\t\t</li>\n\t\t\t\t<li>\n\t\t\t\t\t<span class="propertyDetails_history_item">Price: <%=prop.get(\'last_sold_price\')%></span>\n\t\t\t\t</li>\n\t\t\t</ul>\n\t\t</div>\n\n\t</div>\n</div>\n';});
 
 HOUSER.define('js/xml',[], function () {
 	var xml = function () {
@@ -15786,94 +15839,6 @@ HOUSER.define('js/xml',[], function () {
 	return new xml();
 })
 ;
-HOUSER.define('js/temp_ps',[], function () {
-	var tps = function () {
-		return {
-			getSherifSaleDates: function() {
-				var self = this,
-					deferred = $.Deferred();
-
-				$.ajax({
-					type: 'GET',
-					async: false,
-					url:'http://oklahomacounty.org/sheriff/SheriffSales/',
-				}).done(function (resp) {
-					var dates = self.extractDates(resp);
-					deferred.resolve(dates);
-				}).fail(function (resp) {
-					console.log(resp);
-					deferred.reject();
-				});
-
-				return deferred;
-			},
-			extractDates: function (resp) {
-				var dates = [];
-
-				if (resp !== '') {
-					resp = resp.replace(/<img\b[^>]*>/ig, '');
-					$(resp).find('form').find('option').each(function() {
-						dates.push(this.text);
-					});
-				}
-
-				return dates;
-			},
-			getSherifSalePropertiesByDate: function (date) {
-				var self = this,
-					deferred = $.Deferred(),
-					data = {	SaleDates: date };
-
-				$.ajax({
-					type: 'POST',
-					async: false,
-					data: data,
-					url:'http://oklahomacounty.org/sheriff/SheriffSales/saledetail.asp',
-				}).done(function (resp) {
-					var properties = self.extractProperties(resp);
-					deferred.resolve(properties);
-				}).fail(function (resp) {
-					console.log(resp);
-					deferred.reject();
-				});
-
-				return deferred;
-			},
-			extractProperties: function (resp) {
-				var properties = [];
-
-				if (resp !== '') {
-					resp = resp.replace(/<img\b[^>]*>/ig, '');
-					$(new DOMParser().parseFromString(resp, 'text/html')).find('body table:nth-of-type(3) td:nth-of-type(4) table').each(function () {
-						var property = {};
-						$(this).find('tr').each(function () {
-
-							var set = $(this).find('td');
-							var val0, val2;
-
-							if (set[0]) {
-								val0 = $(set[0]).text().trim();
-							}
-							if (set[2]) {
-								val2 = $(set[2]).text().trim()
-								property[val0] = val2;
-							} else if (!property.account_link) {
-								var val = $(set[0]).find('a').attr('href');
-								property.account_link = val;
-								property.account_id = val.substring(val.indexOf('TNO=')).replace('TNO=', '');
-							}
-						});
-						properties.push(property);
-					});
-				}
-				console.log(properties);
-				return properties;
-			}
-		};
-	};
-	return new tps();
-})
-;
 HOUSER.define('Views/Property',[
 	'Views/SubViewSuper',
 	'text!Templates/property.tmpl',
@@ -15897,13 +15862,6 @@ HOUSER.define('Views/Property',[
 		**/
 		initialize: function (options) {
 			var self = this;
-
-			tps.getSherifSaleDates().done(function (dates) {
-				_.each(dates, function (date) {
-					tps.getSherifSalePropertiesByDate(date);
-				})
-
-			});
 
 			options = options || {};
 

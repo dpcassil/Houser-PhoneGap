@@ -74,29 +74,29 @@ define([
 
 			self.updateModel();
 
-			data = {
-				email: model.get('email'),
-				password: model.get('password')
-			};
+			// data = {
+			// 	email: model.get('email'),
+			// 	password: model.get('password')
+			// };
 
-			// Need to finish making service.
-			ajax.post(data, ajax.service.user.submitLogin, {
-				success: function (resp) {
-					if (resp && resp.d && resp.d.authorized) {
-						HOUSER.USER_TOKEN = resp.d.token;
-						if (localStorage) {
-							localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
-						}
-						HOUSER.router.navigate('property_lists', {trigger: true});
-					} else {
-						alert('User not authorized.');
-					}
-				},
-				error: function (resp) {
-					console.error(resp);
-				}
-			});
-			//HOUSER.router.navigate('welcome', {trigger: true});
+			// Convert to parse.
+			// ajax.post(data, ajax.service.user.submitLogin, {
+			// 	success: function (resp) {
+			// 		if (resp && resp.d && resp.d.authorized) {
+			// 			HOUSER.USER_TOKEN = resp.d.token;
+			// 			if (localStorage) {
+			// 				localStorage.setItem("houser_login_token", HOUSER.USER_TOKEN);
+			// 			}
+			// 			HOUSER.router.navigate('property_lists', {trigger: true});
+			// 		} else {
+			// 			alert('User not authorized.');
+			// 		}
+			// 	},
+			// 	error: function (resp) {
+			// 		console.error(resp);
+			// 	}
+			// });
+			HOUSER.router.navigate('property_lists', {trigger: true});
 		},
 
 		/**
@@ -115,30 +115,6 @@ define([
 					}
 				};
 			HOUSER.router.navigate('signup?' + JSON.stringify(data), {trigger: true});
-		},
-
-		/**
-		@TEST:		Remove after testing.
-		**/
-		testGetProps: function () {
-			var self = this,
-				data = {
-					sDate: '7/2/2015',
-					list: 2,
-					token: HOUSER.USER_TOKEN
-				};
-			ajax.post(data, ajax.service.props.test, {
-				success: function (resp) {
-					if (resp && resp.d) {
-						console.log(resp.d);
-					} else {
-						console.error('User not authorized.');
-					}
-				},
-				error: function (resp) {
-					console.error(resp);
-				}
-			});
 		}
 	});
 
