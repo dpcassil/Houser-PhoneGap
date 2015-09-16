@@ -30,16 +30,35 @@ define([], function () {
 			getSherifSalePropertiesByDate: function (date) {
 				var self = this,
 					deferred = $.Deferred(),
-					data = {	SaleDates: date };
+					data = {	where: { "Sale_Date" : date } };
 
 				$.ajax({
-					type: 'POST',
+					type: 'GET',
 					async: false,
 					data: data,
-					url:'http://oklahomacounty.org/sheriff/SheriffSales/saledetail.asp',
+					url:'https://api.parse.com/1/classes/properties',
+					beforeSend: function (xhr) {
+						xhr.setRequestHeader('X-Parse-Application-Id', '93V9ZnU9nmta5O88zOTQ7vrorfsmf9n7biraFaZm');
+						xhr.setRequestHeader('X-Parse-REST-API-Key', 'TUC27qP3JUx0hVOhCEYxUikiHTueTMqMECtOTxdr');
+					}
 				}).done(function (resp) {
-					var properties = self.extractProperties(resp);
-					deferred.resolve(properties);
+					if (resp && resp.results && resp.results.length > 0) {
+						deferred.resolve(resp.results);
+					} else {
+						data = {	SaleDates: date };
+						$.ajax({
+							type: 'POST',
+							async: false,
+							data: data,
+							url:'http://oklahomacounty.org/sheriff/SheriffSales/saledetail.asp',
+						}).done(function (resp) {
+							var properties = self.extractProperties(resp);
+							deferred.resolve(properties);
+						}).fail(function (resp) {
+							console.log(resp);
+							deferred.reject();
+						});
+					}
 				}).fail(function (resp) {
 					console.log(resp);
 					deferred.reject();

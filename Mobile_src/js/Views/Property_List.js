@@ -46,7 +46,7 @@ define([
 				target = $(e.target).closest('li'),
 				prop = target.data("id");
 
-			HOUSER.current_prop = self.model.get('properties').findWhere({id: prop});
+			HOUSER.current_prop = self.model.get('properties').findWhere({account_id: prop});
 			HOUSER.router.navigate('property', {trigger: true});
 		}
 	});

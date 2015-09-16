@@ -603,7 +603,7 @@ h1 {
     -webkit-justify-content: space-between;
     list-style: none;
     padding: 10px;
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid rgba(62, 62, 62, 0.41);
     cursor: pointer; }
   .propertiesList_item {
     font-weight: 200;
@@ -616,7 +616,7 @@ h1 {
 
 .propertyLists {
   margin: 0;
-  padding: 0 10px; }
+  padding: 0; }
   .propertyLists_list {
     display: flex;
     display: -webkit-flex;
@@ -624,7 +624,8 @@ h1 {
     -webkit-justify-content: space-between;
     list-style: none;
     padding: 10px;
-    border-bottom: 1px solid white;
+    background-color: rgba(108, 36, 36, 0.4);
+    border-bottom: 1px solid rgba(62, 62, 62, 0.41);
     cursor: pointer; }
   .propertyLists_item {
     font-weight: 200;

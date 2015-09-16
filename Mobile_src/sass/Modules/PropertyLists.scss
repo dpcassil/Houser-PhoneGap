@@ -2,7 +2,7 @@ $module-selector: '.propertyLists';
 
 #{$module-selector} {
    margin: 0;
-   padding: 0 10px;
+   padding: 0;
    &_list {
       display: flex;
       display: -webkit-flex;
@@ -10,7 +10,8 @@ $module-selector: '.propertyLists';
       -webkit-justify-content: space-between;
       list-style: none;
       padding: 10px;
-      border-bottom: 1px solid white;
+      background-color: rgba(108, 36, 36, 0.4);
+      border-bottom: 1px solid rgba(62, 62, 62, 0.41);;
       cursor: pointer;
    }
    &_item {

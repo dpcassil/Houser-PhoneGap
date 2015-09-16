@@ -15575,16 +15575,35 @@ HOUSER.define('js/temp_ps',[], function () {
 			getSherifSalePropertiesByDate: function (date) {
 				var self = this,
 					deferred = $.Deferred(),
-					data = {	SaleDates: date };
+					data = {	where: { "Sale_Date" : date } };
 
 				$.ajax({
-					type: 'POST',
+					type: 'GET',
 					async: false,
 					data: data,
-					url:'http://oklahomacounty.org/sheriff/SheriffSales/saledetail.asp',
+					url:'https://api.parse.com/1/classes/properties',
+					beforeSend: function (xhr) {
+						xhr.setRequestHeader('X-Parse-Application-Id', '93V9ZnU9nmta5O88zOTQ7vrorfsmf9n7biraFaZm');
+						xhr.setRequestHeader('X-Parse-REST-API-Key', 'TUC27qP3JUx0hVOhCEYxUikiHTueTMqMECtOTxdr');
+					}
 				}).done(function (resp) {
-					var properties = self.extractProperties(resp);
-					deferred.resolve(properties);
+					if (resp && resp.results && resp.results.length > 0) {
+						deferred.resolve(resp.results);
+					} else {
+						data = {	SaleDates: date };
+						$.ajax({
+							type: 'POST',
+							async: false,
+							data: data,
+							url:'http://oklahomacounty.org/sheriff/SheriffSales/saledetail.asp',
+						}).done(function (resp) {
+							var properties = self.extractProperties(resp);
+							deferred.resolve(properties);
+						}).fail(function (resp) {
+							console.log(resp);
+							deferred.reject();
+						});
+					}
 				}).fail(function (resp) {
 					console.log(resp);
 					deferred.reject();
@@ -15695,7 +15714,7 @@ HOUSER.define('Views/Property_Lists',[
 
 		makeCollections: function (data) {
 			var self = this,
-				_this = this;
+				parse_prop_collection = [];
 
 			_.each(data, function(list, key) {
 				self.property_list_collections.add(
@@ -15707,11 +15726,13 @@ HOUSER.define('Views/Property_Lists',[
 				);
 
 				 _.each(list, function(item) {
-					 var parsePropertyObject = new Parse.Object('propertyObject', item);
-					 //parsePropertyObject.save({key: key});
+					 var parsePropertyObject = new Parse.Object('properties', item);
+					 parsePropertyObject.save({key: key});
+					 parse_prop_collection.push(parsePropertyObject);
 				 })
-				var parsePropertyCollection = new Parse.Object('PropertyCollection');
-				//parsePropertyCollection.save({key: key});
+				var parsePropertyCollection = new Parse.Object('PropertyCollections');
+				parsePropertyCollection.add(parse_prop_collection);
+				parsePropertyCollection.save({key: key});
 			});
 
 			//console.log(self.property_list_collections);
@@ -15733,7 +15754,7 @@ HOUSER.define('Views/Property_Lists',[
 	return View;
 });
 
-HOUSER.define('text!Templates/property_list.tmpl',[],function () { return '<div class="pages_flex_wrapper">\n\t<h3><%=list.get(\'name\')%></h3>\n\t<ul class="propertiesList">\n\t\t<%_.each(list.get(\'properties\').models, function (prop) { %>\n\t\t\t<li class="propertiesList_list houser_prop_item" data-id=<%=prop.get(\'id\')%>>\n\t\t\t\t<div class="propertiesList_item_set">\n\t\t\t\t\t<span class="propertiesList_item_primary"><%=prop.get(\'address\')%></span>\n\t\t\t\t\t<span class="propertiesList_item_primary">$45,000</span>\n\t\t\t\t</div>\n\t\t\t\t<div class="propertiesList_item_set">\n\t\t\t\t\t<span class="propertiesList_item_secondary"><%=prop.get(\'address\')%></span>\n\t\t\t\t</div>\n\t\t\t</li>\n\t\t<%});%>\n\t</ul>\n</div>\n';});
+HOUSER.define('text!Templates/property_list.tmpl',[],function () { return '<div class="pages_flex_wrapper">\n\t<h3><%=list.get(\'name\')%></h3>\n\t<ul class="propertiesList">\n\t\t<%_.each(list.get(\'properties\').models, function (prop) { %>\n\t\t\t<li class="propertiesList_list houser_prop_item" data-id=<%=prop.get(\'account_id\')%>>\n\t\t\t\t<div class="propertiesList_item_set">\n\t\t\t\t\t<span class="propertiesList_item_primary"><%=prop.get(\'address\')%></span>\n\t\t\t\t\t<span class="propertiesList_item_primary">$45,000</span>\n\t\t\t\t</div>\n\t\t\t\t<div class="propertiesList_item_set">\n\t\t\t\t\t<span class="propertiesList_item_secondary"><%=prop.get(\'address\')%></span>\n\t\t\t\t</div>\n\t\t\t</li>\n\t\t<%});%>\n\t</ul>\n</div>\n';});
 
 HOUSER.define('Views/Property_List',[
 	'Views/SubViewSuper',
@@ -15783,7 +15804,7 @@ HOUSER.define('Views/Property_List',[
 				target = $(e.target).closest('li'),
 				prop = target.data("id");
 
-			HOUSER.current_prop = self.model.get('properties').findWhere({id: prop});
+			HOUSER.current_prop = self.model.get('properties').findWhere({account_id: prop});
 			HOUSER.router.navigate('property', {trigger: true});
 		}
 	});
